@@ -661,8 +661,8 @@ void OccMap::globalCloudCallback(const sensor_msgs::PointCloud2ConstPtr& msg)
   //inflate_idx_upper = index_xyz + Eigen::Vector3i((inflate_radius_/resolution_),(inflate_radius_/resolution_),20);
   
   setupInflationRange(index_xyz);
-  ROS_INFO("lower:%d %d %d", inflate_idx_lower[0],inflate_idx_lower[1],inflate_idx_lower[2]);
-  ROS_INFO("upper:%d %d %d", inflate_idx_upper[0],inflate_idx_upper[1],inflate_idx_upper[2]);
+  //ROS_INFO("lower:%d %d %d", inflate_idx_lower[0],inflate_idx_lower[1],inflate_idx_lower[2]);
+  //ROS_INFO("upper:%d %d %d", inflate_idx_upper[0],inflate_idx_upper[1],inflate_idx_upper[2]);
   inflate(inflate_idx_lower, inflate_idx_upper);
   //inflate(Eigen::Vector3i(0,0,0), grid_size_);   //看这里   改膨胀系数
   auto te_global_inflate = std::chrono::high_resolution_clock::now();

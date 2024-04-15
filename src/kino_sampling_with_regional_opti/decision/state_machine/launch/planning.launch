@@ -118,7 +118,7 @@
     <param name="fsm/use_r3" value="false" type="bool"/>
     <param name="fsm/use_optimization" value="true" type="bool"/>
     <param name="fsm/replan" value="true" type="bool"/>
-    <param name="fsm/replan_time" value="1" type="double"/>
+    <param name="fsm/replan_time" value="2" type="double"/>
     <param name="fsm/allow_track_err_replan" value="false" type="bool"/>
     <param name="fsm/e_stop_time_margin" value="0.5" type="double"/>
     <param name="fsm/replan_check_duration" value="3.0" type="double"/>

@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(rviz_plugins)
 
 add_compile_options(-std=c++11)
-
+#set(quadrotor_msgs_DIR "/home/cc/FastAutoMav/devel/share/quadrotor_msgs/cmake")
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   rviz

@@ -165,6 +165,7 @@ namespace kino_planner
       {
         double curr_remain_safe_time = remain_safe_time_ - (ros::Time::now() - collision_detect_time_).toSec();
         ROS_ERROR("Replan fail, %lf seconds to collide", curr_remain_safe_time);
+        //changeState(WAIT_GOAL);
         if (curr_remain_safe_time < e_stop_time_margin_)
         {
           sendEStopToServer();

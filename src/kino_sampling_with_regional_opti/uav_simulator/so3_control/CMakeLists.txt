@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(so3_control)
-
+#set(quadrotor_msgs_DIR "/home/cc/FastAutoMav/devel/share/quadrotor_msgs/cmake")
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   nav_msgs
