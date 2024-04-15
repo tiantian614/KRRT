@@ -34,7 +34,7 @@ int main(int argc, char** argv)
       goal.position.x = pt[0];
       goal.position.y = pt[1];
       goal.position.z = pt[2];
-      //goal_pub.publish(goal);
+      goal_pub.publish(goal);
       last_pt = pt;
       rate.sleep();
     }

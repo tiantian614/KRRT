@@ -24,7 +24,9 @@ struct RRTNode {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
   RRTNode* parent;
   StatePVA x;
+  //cost is the distance from the start
   double cost_from_start;
+  //tau is the time from the start
   double tau_from_start;
   double cost_from_parent;
   double tau_from_parent;

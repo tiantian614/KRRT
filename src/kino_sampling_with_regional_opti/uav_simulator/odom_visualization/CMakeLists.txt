@@ -39,7 +39,6 @@ project(odom_visualization)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-#set(quadrotor_msgs_DIR "/home/cc/FastAutoMav/devel/share/quadrotor_msgs/cmake")
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   sensor_msgs

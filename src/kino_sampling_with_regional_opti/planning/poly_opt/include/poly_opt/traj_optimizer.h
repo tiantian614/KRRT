@@ -33,9 +33,9 @@ public:
   bool initialize(const Trajectory &traj, int type)
   {
     int seg_num = traj.getPieceNum();
+    ROS_INFO("seg_num: %d", seg_num);
     if (seg_num <= 1)
       return false;
-    
     //set front-end traj
     front_end_traj_ = traj;
     

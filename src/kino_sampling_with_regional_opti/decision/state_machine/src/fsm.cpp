@@ -93,7 +93,6 @@ namespace kino_planner
     end_acc_ << goal_msg->acceleration.x,
                 goal_msg->acceleration.y,
                 goal_msg->acceleration.z;
-    ROS_INFO("!!!");
     new_goal_ = true;
   }
 
@@ -139,7 +138,6 @@ namespace kino_planner
 
     case WAIT_GOAL:
     {
-        //ROS_INFO("FSM:WAITGOAL");
       remain_safe_time_ = 10000.0;
       if (!new_goal_)
       {
@@ -147,8 +145,6 @@ namespace kino_planner
       }
       else
       {
-
-          cout << new_goal_ << endl;
         new_goal_ = false;
         getPlanStartState(start_pos_, start_vel_, start_acc_);
         changeState(GENERATE_TRAJ);
@@ -370,6 +366,7 @@ namespace kino_planner
 
   inline bool FSM::needReplan()
   {
+    //ROS_INFO("need replan chec");
     double t_during_traj = (ros::Time::now() - curr_traj_start_time_).toSec();
     double t_check_until_traj = std::min(traj_.getTotalDuration(), t_during_traj + replan_check_duration_);
     if (!pos_checker_ptr_->checkPolyTraj(traj_, t_during_traj, t_check_until_traj, pos_about_to_collide_, remain_safe_time_))

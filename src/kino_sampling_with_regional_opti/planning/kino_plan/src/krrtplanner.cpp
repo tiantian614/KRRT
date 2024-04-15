@@ -680,7 +680,7 @@ int KRRTPlanner::rrtStar(const StatePVA& x_init, const StatePVA& x_final, int n,
   }
   else if (valid_start_tree_node_nums_ == n)
   {
-    ROS_ERROR_STREAM("[KRRT]: NOT  TO GOAL after " << n << " nodes added to rrt-tree");
+    ROS_ERROR_STREAM("[KRRT]: NOT CONNECTED TO GOAL after " << n << " nodes added to rrt-tree");
     ROS_INFO_STREAM("[KRRT]: total sample times: " << idx);
     ROS_INFO_STREAM("[KRRT]: valid sample times: " << valid_sample_nums_);
     ROS_INFO_STREAM("[KRRT]: valid tree node nums: " << valid_start_tree_node_nums_);
@@ -688,7 +688,7 @@ int KRRTPlanner::rrtStar(const StatePVA& x_init, const StatePVA& x_final, int n,
   }
   else if ((ros::Time::now() - rrt_start_time).toSec() >= search_time)
   {
-    ROS_ERROR_STREAM("[KRRT]: NOT  TO GOAL after " << (ros::Time::now() - rrt_start_time).toSec() << " seconds");
+    ROS_ERROR_STREAM("[KRRT]: NOT CONNECTED TO GOAL after " << (ros::Time::now() - rrt_start_time).toSec() << " seconds");
     ROS_INFO_STREAM("[KRRT]: total sample times: " << idx);
     ROS_INFO_STREAM("[KRRT]: valid sample times: " << valid_sample_nums_);
     ROS_INFO_STREAM("[KRRT]: valid tree node nums: " << valid_start_tree_node_nums_);

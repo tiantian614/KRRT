@@ -114,7 +114,6 @@ Eigen::Vector3d getRPY(const Eigen::Quaterniond &quat)
 
     double yaw, pitch, roll;
     if (rotMat[2][0] != 1 && rotMat[2][0] != -1)
-    if (rotMat[2][0] != 1 && rotMat[2][0] != -1)
     {
         double yaw1, yaw2, pitch1, pitch2, roll1, roll2;
         pitch1 = -asin(rotMat[2][0]);
@@ -220,11 +219,6 @@ void polyTrajCallback(const quadrotor_msgs::PolynomialTrajectory& traj)
 
 void odomCallbck(const nav_msgs::OdometryConstPtr odom)
 {
-
-  double times = 0;
-  double pub_times = 0.1 / cmd_duration;  
-
-
   _curr_posi[0] = odom->pose.pose.position.x;
   _curr_posi[1] = odom->pose.pose.position.y;
   _curr_posi[2] = odom->pose.pose.position.z;
@@ -245,144 +239,130 @@ void odomCallbck(const nav_msgs::OdometryConstPtr odom)
 //    return;
   
   // #1. check if it is right state
-//  if (_state == INIT)
-//  {
-//    _cmd.header = odom->header;
-//
-//    _cmd.position.x = _initial_pos[0];
-//    _cmd.position.y = _initial_pos[1];
-//    _cmd.position.z = _initial_pos[2];
-//
-//    _cmd.velocity.x = 0.0;
-//    _cmd.velocity.y = 0.0;
-//    _cmd.velocity.z = 0.0;
-//
-//    _cmd.acceleration.x = 0.0;
-//    _cmd.acceleration.y = 0.0;
-//    _cmd.acceleration.z = 0.0;
-//
-////      _cmd.jerk.x = 0.0;
-////      _cmd.jerk.y = 0.0;
-////      _cmd.jerk.z = 0.0;
-//
-//  }
-//  if (_state == HOVER)
-//  {
-//    _cmd.header = odom  ->header;
-//    _cmd.trajectory_flag = quadrotor_msgs::PositionCommand::TRAJECTORY_STATUS_COMPLETED;
-//
-//    _cmd.position = _last_cmd.position;
-//
-//    _cmd.velocity.x = 0.0;
-//    _cmd.velocity.y = 0.0;
-//    _cmd.velocity.z = 0.0;
-//
-//    _cmd.acceleration.x = 0.0;
-//    _cmd.acceleration.y = 0.0;
-//    _cmd.acceleration.z = 0.0;
-//
-////      _cmd.jerk.x = 0.0;
-////      _cmd.jerk.y = 0.0;
-////      _cmd.jerk.z = 0.0;
-//
-//    _cmd.yaw_dot = 0.0;
-//    _cmd.yaw = _last_cmd.yaw;
-//  }
-//  // #2. locate the trajectory segment
-//  if (_state == TRAJ)
-//  {
-//    //(odom freq >= cmd timer freq) has to be satisfied or it will cause several diffferent cmd in the same time stamp
-//
-//    double t = std::max(0.0, (ros::Time::now() - _start_time).toSec());
-//    if (t >= (_final_time - _start_time).toSec() - 0.02)
-//      _state = HOVER;
-//
-//    // #3. calculate the desired states
-//    //ROS_WARN("[SERVER] the time : %.3lf\n, n = %d, m = %d", t, _n_order, _n_segment);
-//    for (int idx = 0; idx < _n_segment; ++idx)
-//    {
-//      if (t > _time[idx] && idx + 1 < _n_segment)
-//      {
-//        t -= _time[idx];
-//      }
-//      else
-//      {
-//        _cmd.header = odom->header;
-//
-//        int cur_order = _order[idx];
-//        Eigen::Vector3d pos(0.0, 0.0, 0.0), vel(0.0, 0.0, 0.0), acc(0.0, 0.0, 0.0);
-//        calPVAFromCoeff(pos, vel, acc, _coef[_DIM_x].col(idx), _coef[_DIM_y].col(idx), _coef[_DIM_z].col(idx), t, cur_order);
-//        _cmd.position.x = pos[0];
-//        _cmd.position.y = pos[1];
-//        _cmd.position.z = pos[2];
-//        _cmd.velocity.x = vel[0];
-//        _cmd.velocity.y = vel[1];
-//        _cmd.velocity.z = vel[2];
-//        _cmd.acceleration.x = acc[0];
-//        _cmd.acceleration.y = acc[1];
-//        _cmd.acceleration.z = acc[2];
-////          _cmd.jerk.x = 0.0;
-////          _cmd.jerk.y = 0.0;
-////          _cmd.jerk.z = 0.0;
-//
-//		//use look_forward yaw planning
-//        double look_forward_time = std::min(1/vel.norm(), std::max(0.0, (_final_time - _start_time).toSec() - t - 0.02));
-//        if (look_forward_time == 0)
-//        {
-//          _cmd.yaw = _last_cmd.yaw;
-//        }
-//        else
-//        {
-//          Eigen::Vector3d pos_lf(0.0, 0.0, 0.0), vel_lf(0.0, 0.0, 0.0), acc_lf(0.0, 0.0, 0.0);
-//          calPVAFromCoeff(pos_lf, vel_lf, acc_lf, _coef[_DIM_x].col(idx), _coef[_DIM_y].col(idx), _coef[_DIM_z].col(idx), t + look_forward_time, cur_order);
-//          //use look_forward yaw planning
-//          _cmd.yaw = atan2(pos_lf[1] - pos[1], pos_lf[0] - pos[0]);
-//          //use tangent direction for yaw planning
-//          //_cmd.yaw = atan2(_cmd.velocity.y, _cmd.velocity.x); //(-pi, pi]
-//          double d_yaw = _cmd.yaw - _last_cmd.yaw;
-//          if (d_yaw >= M_PI)
-//          {
-//            d_yaw -= M_PI;
-//            d_yaw -= M_PI;
-//          }
-//          if (d_yaw <= -M_PI)
-//          {
-//            d_yaw += M_PI;
-//            d_yaw += M_PI;
-//          }
-//          double d_yaw_abs = fabs(d_yaw);
-//          if (d_yaw_abs >= 0.02)
-//            _cmd.yaw = _last_cmd.yaw + d_yaw / d_yaw_abs * 0.02;
-//        }
-//        //or use tangent direction for yaw planning
-//
-//        _last_cmd = _cmd;
-//        break;
-//      }
-//    }
-//  }
-//  /*
-//  // #4. just publish
-//  ros::Time next_cmd_pub_time = ros::Time::now();
-//  //ROS_INFO("next_cmd_pub_time: %f", next_cmd_pub_time.toSec());
-//  while(times <= pub_times - 1)
-//  {
-//      ros::Time tnow = ros::Time::now();
-//    if (tnow.toSec() - next_cmd_pub_time.toSec() >= cmd_duration)
-//      {
-//      next_cmd_pub_time += ros::Duration(cmd_duration);
-//      _cmd.header.stamp  = odom->header.stamp + ros::Duration(cmd_duration) *times;
-//    // 以100Hz的频率发布cmd
-//
-//      _cmd_pub.publish(_cmd);
-//      times ++;
-//      }
-//
-//  }
-//  //ROS_INFO("Odom123");
-//  //这里_cmd发布频率改一下   话题header也要改
-//  */
-//  _cmd_pub.publish(_cmd);
+  // if (_state == INIT) 
+  // {
+  //   _cmd.header = odom->header;
+		
+  //   _cmd.position.x = _initial_pos[0];
+  //   _cmd.position.y = _initial_pos[1];
+  //   _cmd.position.z = _initial_pos[2];
+		
+  //   _cmd.velocity.x = 0.0;
+  //   _cmd.velocity.y = 0.0;
+  //   _cmd.velocity.z = 0.0;
+    
+  //   _cmd.acceleration.x = 0.0;
+  //   _cmd.acceleration.y = 0.0;
+  //   _cmd.acceleration.z = 0.0;
+
+  // }
+  // if (_state == HOVER)
+  // {
+  //   _cmd.header = odom  ->header;
+  //   _cmd.trajectory_flag = quadrotor_msgs::PositionCommand::TRAJECTORY_STATUS_COMPLETED;
+
+  //   _cmd.position = _last_cmd.position;
+    
+  //   _cmd.velocity.x = 0.0;
+  //   _cmd.velocity.y = 0.0;
+  //   _cmd.velocity.z = 0.0;
+    
+  //   _cmd.acceleration.x = 0.0;
+  //   _cmd.acceleration.y = 0.0;
+  //   _cmd.acceleration.z = 0.0;
+    
+  //   _cmd.yaw_dot = 0.0;
+  //   _cmd.yaw = _last_cmd.yaw;
+  // }
+  // // #2. locate the trajectory segment
+  // if (_state == TRAJ)
+  // {   
+  //   //(odom freq >= cmd timer freq) has to be satisfied or it will cause several diffferent cmd in the same time stamp
+    
+  //   double t = std::max(0.0, (ros::Time::now() - _start_time).toSec());
+  //   if (t >= (_final_time - _start_time).toSec() - 0.02)
+  //     _state = HOVER;
+    
+  //   // #3. calculate the desired states
+  //   //ROS_WARN("[SERVER] the time : %.3lf\n, n = %d, m = %d", t, _n_order, _n_segment);
+  //   for (int idx = 0; idx < _n_segment; ++idx)
+  //   {
+  //     if (t > _time[idx] && idx + 1 < _n_segment)
+  //     {
+  //       t -= _time[idx];
+  //     }
+  //     else
+  //     { 
+  //       _cmd.header = odom->header;
+		
+  //       int cur_order = _order[idx];
+  //       Eigen::Vector3d pos(0.0, 0.0, 0.0), vel(0.0, 0.0, 0.0), acc(0.0, 0.0, 0.0);
+  //       calPVAFromCoeff(pos, vel, acc, _coef[_DIM_x].col(idx), _coef[_DIM_y].col(idx), _coef[_DIM_z].col(idx), t, cur_order);
+  //       _cmd.position.x = pos[0];
+  //       _cmd.position.y = pos[1];
+  //       _cmd.position.z = pos[2];
+  //       _cmd.velocity.x = vel[0];
+  //       _cmd.velocity.y = vel[1];
+  //       _cmd.velocity.z = vel[2];
+  //       _cmd.acceleration.x = acc[0];
+  //       _cmd.acceleration.y = acc[1];
+  //       _cmd.acceleration.z = acc[2];
+
+	// 	//use look_forward yaw planning
+  //       double look_forward_time = std::min(1/vel.norm(), std::max(0.0, (_final_time - _start_time).toSec() - t - 0.02));
+  //       if (look_forward_time == 0)
+  //       {
+  //         _cmd.yaw = _last_cmd.yaw;
+  //       }
+  //       else
+  //       {
+  //         Eigen::Vector3d pos_lf(0.0, 0.0, 0.0), vel_lf(0.0, 0.0, 0.0), acc_lf(0.0, 0.0, 0.0);
+  //         calPVAFromCoeff(pos_lf, vel_lf, acc_lf, _coef[_DIM_x].col(idx), _coef[_DIM_y].col(idx), _coef[_DIM_z].col(idx), t + look_forward_time, cur_order);
+  //         //use look_forward yaw planning
+  //         _cmd.yaw = atan2(pos_lf[1] - pos[1], pos_lf[0] - pos[0]);
+  //         //use tangent direction for yaw planning
+  //         //_cmd.yaw = atan2(_cmd.velocity.y, _cmd.velocity.x); //(-pi, pi]
+  //         double d_yaw = _cmd.yaw - _last_cmd.yaw;
+  //         if (d_yaw >= M_PI)
+  //         {
+  //           d_yaw -= M_PI;
+  //           d_yaw -= M_PI;
+  //         }
+  //         if (d_yaw <= -M_PI)
+  //         {
+  //           d_yaw += M_PI;
+  //           d_yaw += M_PI;
+  //         }
+  //         double d_yaw_abs = fabs(d_yaw);
+  //         if (d_yaw_abs >= 0.02)
+  //           _cmd.yaw = _last_cmd.yaw + d_yaw / d_yaw_abs * 0.02;
+  //       }
+  //       //or use tangent direction for yaw planning
+
+  //       _last_cmd = _cmd;
+  //       break;
+  //     } 
+  //   }
+  // }
+  // // #4. just publish
+  // ros::Time next_cmd_pub_time = ros::Time::now();
+  // //ROS_INFO("next_cmd_pub_time: %f", next_cmd_pub_time.toSec());
+  // while(times <= pub_times - 1)
+  // {
+  //     ros::Time tnow = ros::Time::now();
+  //   if (tnow.toSec() - next_cmd_pub_time.toSec() >= cmd_duration)
+  //     {
+  //     next_cmd_pub_time += ros::Duration(cmd_duration);
+  //     _cmd.header.stamp  = odom->header.stamp + ros::Duration(cmd_duration) *times;
+  //   // 以100Hz的频率发布cmd
+     
+  //     _cmd_pub.publish(_cmd);
+  //     times ++;
+  //     }
+    
+  // }
+  //这里_cmd发布频率改一下   话题header也要改
+
   Eigen::Vector3d desire_pos(_cmd.position.x, _cmd.position.y, _cmd.position.z);
 
   static tf2_ros::TransformBroadcaster br_map_ego_desired;
@@ -395,7 +375,7 @@ void odomCallbck(const nav_msgs::OdometryConstPtr odom)
   transformStamped.transform.translation.y = _cmd.position.y;
   transformStamped.transform.translation.z = _cmd.position.z;
   Eigen::AngleAxisd aa(_cmd.yaw, Eigen::Vector3d::UnitZ());
-  Eigen::Quaterniond d_q(aa);
+  Eigen::Quaterniond d_q(aa);  
   transformStamped.transform.rotation.x = d_q.x();
   transformStamped.transform.rotation.y = d_q.y();
   transformStamped.transform.rotation.z = d_q.z();
@@ -414,128 +394,117 @@ void odomCallbck(const nav_msgs::OdometryConstPtr odom)
 
 void cmdCallback(const ros::TimerEvent &e)
 {
-    // #1. check if it is right state
-    if (_state == INIT)
+    if (_state == INIT) 
+  {
+   // _cmd.header = odom->header;
+		_cmd.header.frame_id = "world";
+    _cmd.header.stamp = ros::Time::now();
+    _cmd.position.x = _initial_pos[0];
+    _cmd.position.y = _initial_pos[1];
+    _cmd.position.z = _initial_pos[2];
+		
+    _cmd.velocity.x = 0.0;
+    _cmd.velocity.y = 0.0;
+    _cmd.velocity.z = 0.0;
+    
+    _cmd.acceleration.x = 0.0;
+    _cmd.acceleration.y = 0.0;
+    _cmd.acceleration.z = 0.0;
+
+  }
+  if (_state == HOVER)
+  {
+    _cmd.header.frame_id = "world";
+    _cmd.header.stamp = ros::Time::now();
+    _cmd.trajectory_flag = quadrotor_msgs::PositionCommand::TRAJECTORY_STATUS_COMPLETED;
+
+    _cmd.position = _last_cmd.position;
+    
+    _cmd.velocity.x = 0.0;
+    _cmd.velocity.y = 0.0;
+    _cmd.velocity.z = 0.0;
+    
+    _cmd.acceleration.x = 0.0;
+    _cmd.acceleration.y = 0.0;
+    _cmd.acceleration.z = 0.0;
+    
+    _cmd.yaw_dot = 0.0;
+    _cmd.yaw = _last_cmd.yaw;
+  }
+  // #2. locate the trajectory segment
+  if (_state == TRAJ)
+  {   
+    //(odom freq >= cmd timer freq) has to be satisfied or it will cause several diffferent cmd in the same time stamp
+    
+    double t = std::max(0.0, (ros::Time::now() - _start_time).toSec());
+    if (t >= (_final_time - _start_time).toSec() - 0.02)
+      _state = HOVER;
+    
+    // #3. calculate the desired states
+    //ROS_WARN("[SERVER] the time : %.3lf\n, n = %d, m = %d", t, _n_order, _n_segment);
+    for (int idx = 0; idx < _n_segment; ++idx)
     {
-//        _cmd.header = odom->header;
-        _cmd.header.frame_id="world";
-        _cmd.header.stamp=ros::Time::now();
-        _cmd.position.x = _initial_pos[0];
-        _cmd.position.y = _initial_pos[1];
-        _cmd.position.z = _initial_pos[2];
+      if (t > _time[idx] && idx + 1 < _n_segment)
+      {
+        t -= _time[idx];
+      }
+      else
+      { 
+        _cmd.header.frame_id = "world";
+        _cmd.header.stamp = ros::Time::now();
+		
+        int cur_order = _order[idx];
+        Eigen::Vector3d pos(0.0, 0.0, 0.0), vel(0.0, 0.0, 0.0), acc(0.0, 0.0, 0.0);
+        calPVAFromCoeff(pos, vel, acc, _coef[_DIM_x].col(idx), _coef[_DIM_y].col(idx), _coef[_DIM_z].col(idx), t, cur_order);
+        _cmd.position.x = pos[0];
+        _cmd.position.y = pos[1];
+        _cmd.position.z = pos[2];
+        _cmd.velocity.x = vel[0];
+        _cmd.velocity.y = vel[1];
+        _cmd.velocity.z = vel[2];
+        _cmd.acceleration.x = acc[0];
+        _cmd.acceleration.y = acc[1];
+        _cmd.acceleration.z = acc[2];
 
-        _cmd.velocity.x = 0.0;
-        _cmd.velocity.y = 0.0;
-        _cmd.velocity.z = 0.0;
-
-        _cmd.acceleration.x = 0.0;
-        _cmd.acceleration.y = 0.0;
-        _cmd.acceleration.z = 0.0;
-
-//      _cmd.jerk.x = 0.0;
-//      _cmd.jerk.y = 0.0;
-//      _cmd.jerk.z = 0.0;
-
-    }
-    if (_state == HOVER)
-    {
-//        _cmd.header = odom  ->header;
-        _cmd.header.frame_id="world";
-        _cmd.header.stamp=ros::Time::now();
-        _cmd.trajectory_flag = quadrotor_msgs::PositionCommand::TRAJECTORY_STATUS_COMPLETED;
-
-        _cmd.position = _last_cmd.position;
-
-        _cmd.velocity.x = 0.0;
-        _cmd.velocity.y = 0.0;
-        _cmd.velocity.z = 0.0;
-
-        _cmd.acceleration.x = 0.0;
-        _cmd.acceleration.y = 0.0;
-        _cmd.acceleration.z = 0.0;
-
-//      _cmd.jerk.x = 0.0;
-//      _cmd.jerk.y = 0.0;
-//      _cmd.jerk.z = 0.0;
-
-        _cmd.yaw_dot = 0.0;
-        _cmd.yaw = _last_cmd.yaw;
-    }
-    // #2. locate the trajectory segment
-    if (_state == TRAJ)
-    {
-        //(odom freq >= cmd timer freq) has to be satisfied or it will cause several diffferent cmd in the same time stamp
-
-        double t = std::max(0.0, (ros::Time::now() - _start_time).toSec());
-        if (t >= (_final_time - _start_time).toSec() - 0.02)
-            _state = HOVER;
-
-        // #3. calculate the desired states
-        //ROS_WARN("[SERVER] the time : %.3lf\n, n = %d, m = %d", t, _n_order, _n_segment);
-        for (int idx = 0; idx < _n_segment; ++idx)
+		//use look_forward yaw planning
+        double look_forward_time = std::min(1/vel.norm(), std::max(0.0, (_final_time - _start_time).toSec() - t - 0.02));
+        if (look_forward_time == 0)
         {
-            if (t > _time[idx] && idx + 1 < _n_segment)
-            {
-                t -= _time[idx];
-            }
-            else
-            {
-//                _cmd.header = odom->header;
-                _cmd.header.frame_id="world";
-                _cmd.header.stamp=ros::Time::now();
-                int cur_order = _order[idx];
-                Eigen::Vector3d pos(0.0, 0.0, 0.0), vel(0.0, 0.0, 0.0), acc(0.0, 0.0, 0.0);
-                calPVAFromCoeff(pos, vel, acc, _coef[_DIM_x].col(idx), _coef[_DIM_y].col(idx), _coef[_DIM_z].col(idx), t, cur_order);
-                _cmd.position.x = pos[0];
-                _cmd.position.y = pos[1];
-                _cmd.position.z = pos[2];
-                _cmd.velocity.x = vel[0];
-                _cmd.velocity.y = vel[1];
-                _cmd.velocity.z = vel[2];
-                _cmd.acceleration.x = acc[0];
-                _cmd.acceleration.y = acc[1];
-                _cmd.acceleration.z = acc[2];
-
-                //use look_forward yaw planning
-                double look_forward_time = std::min(1/vel.norm(), std::max(0.0, (_final_time - _start_time).toSec() - t - 0.02));
-                if (look_forward_time == 0)
-                {
-                    _cmd.yaw = _last_cmd.yaw;
-                }
-                else
-                {
-                    Eigen::Vector3d pos_lf(0.0, 0.0, 0.0), vel_lf(0.0, 0.0, 0.0), acc_lf(0.0, 0.0, 0.0);
-                    calPVAFromCoeff(pos_lf, vel_lf, acc_lf, _coef[_DIM_x].col(idx), _coef[_DIM_y].col(idx), _coef[_DIM_z].col(idx), t + look_forward_time, cur_order);
-                    //use look_forward yaw planning
-                    _cmd.yaw = atan2(pos_lf[1] - pos[1], pos_lf[0] - pos[0]);
-                    //use tangent direction for yaw planning
-                    //_cmd.yaw = atan2(_cmd.velocity.y, _cmd.velocity.x); //(-pi, pi]
-                    double d_yaw = _cmd.yaw - _last_cmd.yaw;
-                    if (d_yaw >= M_PI)
-                    {
-                        d_yaw -= M_PI;
-                        d_yaw -= M_PI;
-                    }
-                    if (d_yaw <= -M_PI)
-                    {
-                        d_yaw += M_PI;
-                        d_yaw += M_PI;
-                    }
-                    double d_yaw_abs = fabs(d_yaw);
-                    if (d_yaw_abs >= 0.02)
-                        _cmd.yaw = _last_cmd.yaw + d_yaw / d_yaw_abs * 0.02;
-                }
-                //or use tangent direction for yaw planning
-
-                _last_cmd = _cmd;
-                break;
-            }
+          _cmd.yaw = _last_cmd.yaw;
         }
+        else
+        {
+          Eigen::Vector3d pos_lf(0.0, 0.0, 0.0), vel_lf(0.0, 0.0, 0.0), acc_lf(0.0, 0.0, 0.0);
+          calPVAFromCoeff(pos_lf, vel_lf, acc_lf, _coef[_DIM_x].col(idx), _coef[_DIM_y].col(idx), _coef[_DIM_z].col(idx), t + look_forward_time, cur_order);
+          //use look_forward yaw planning
+          _cmd.yaw = atan2(pos_lf[1] - pos[1], pos_lf[0] - pos[0]);
+          //use tangent direction for yaw planning
+          //_cmd.yaw = atan2(_cmd.velocity.y, _cmd.velocity.x); //(-pi, pi]
+          double d_yaw = _cmd.yaw - _last_cmd.yaw;
+          if (d_yaw >= M_PI)
+          {
+            d_yaw -= M_PI;
+            d_yaw -= M_PI;
+          }
+          if (d_yaw <= -M_PI)
+          {
+            d_yaw += M_PI;
+            d_yaw += M_PI;
+          }
+          double d_yaw_abs = fabs(d_yaw);
+          if (d_yaw_abs >= 0.02)
+            _cmd.yaw = _last_cmd.yaw + d_yaw / d_yaw_abs * 0.02;
+        }
+        //or use tangent direction for yaw planning
+
+        _last_cmd = _cmd;
+        break;
+      } 
     }
-
-    _cmd_pub.publish(_cmd);
-
+  }
+  _cmd_pub.publish(_cmd);
 }
+
 
 int main(int argc, char** argv)
 {

@@ -2,7 +2,8 @@
 <launch>
   <node pkg="state_machine" type="traj_server_node" name="traj_server_node" output="screen">
     <param name="rate/cmd" value="100.0"/>
-    <remap from="/curr_state_sub_topic" to="/Odometry" />
+    <remap from="/curr_state_sub_topic" to="/aft_mapped_to_init" />
     <!-- <remap from="/position_cmd" to="planning/pos_cmd"/> --> 
-    </node>
+  </node>
+  
 </launch>

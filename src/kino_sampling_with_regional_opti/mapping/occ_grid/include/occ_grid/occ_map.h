@@ -132,6 +132,7 @@ private:
   void indepOdomCallback(const nav_msgs::OdometryConstPtr& msg);
   void globalOccVisCallback(const ros::TimerEvent& e);
   void localOccVisCallback(const ros::TimerEvent& e);
+  void setupInflationRange(Eigen::Vector3i idx);
 	void globalCloudCallback(const sensor_msgs::PointCloud2ConstPtr& msg);
 
   bool has_global_cloud_, has_first_depth_, use_global_map_;
@@ -179,7 +180,11 @@ private:
   pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered_;
 
   /* inflation */
-  double infalte_length_;
+  double inflate_length_;
+  double inflate_radius_;
+
+  Eigen::Vector3i index_xyz;  
+  Eigen::Vector3i inflate_idx_lower, inflate_idx_upper;
   std::vector<bool> inflate_occupancy_;
   void inflate(const Eigen::Vector3i &min_idx, const Eigen::Vector3i &max_idx);
   

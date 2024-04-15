@@ -6,7 +6,7 @@ set(CMAKE_CXX_FLAGS "-std=c++11")
 set(CMAKE_CXX_STANDARD 14)
 #set(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -Wall -g -ggdb")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wall -g")
-#set(quadrotor_msgs_DIR "/home/cc/FastAutoMav/devel/share/quadrotor_msgs/cmake")
+
 find_package(catkin REQUIRED COMPONENTS
     roscpp
     rospy
@@ -15,11 +15,11 @@ find_package(catkin REQUIRED COMPONENTS
     kino_plan
     r3_plan
     poly_opt
-    
+    quadrotor_msgs
     visualization_utils
     self_msgs_and_srvs
 )
-find_package(quadrotor_msgs REQUIRED)
+
 find_package(Eigen3 REQUIRED)
 find_package(PCL 1.7 REQUIRED)
 
@@ -31,7 +31,6 @@ catkin_package(
 )
 
 include_directories(
-${quadrotor_msgs_INCLUDE_DIRS}
     include
     ${catkin_INCLUDE_DIRS}
     ${PCL_INCLUDE_DIRS}

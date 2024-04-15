@@ -42,7 +42,6 @@ project(multi_map_server)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-#set(quadrotor_msgs_DIR "/home/cc/FastAutoMav/devel/share/quadrotor_msgs/cmake")
 find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   nav_msgs
@@ -56,7 +55,7 @@ find_package(catkin REQUIRED COMPONENTS
   pose_utils
   quadrotor_msgs
 )
-message ( ${pose_utils_INCLUDE_DIRS})
+
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 

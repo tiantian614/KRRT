@@ -502,7 +502,7 @@ inline int OccMap::setCacheOccupancy(const Eigen::Vector3d &pos, int occ)
 
 void OccMap::inflate(const Eigen::Vector3i &min_idx, const Eigen::Vector3i &max_idx)
 {
-  int inflate_num = ceil(infalte_length_/resolution_);
+  int inflate_num = ceil(inflate_length_/resolution_);
   for (int x = min_idx[0]; x < max_idx[0]; ++x) 
   {
     for (int y = min_idx[1]; y < max_idx[1]; ++y) 
@@ -574,6 +574,11 @@ void OccMap::indepOdomCallback(const nav_msgs::OdometryConstPtr& odom)
   local_range_min_ = curr_posi_ - sensor_range_;
   local_range_max_ = curr_posi_ + sensor_range_;
 
+  index_xyz[0] = ceil((curr_posi_[0]-min_range_[0])/resolution_);
+  index_xyz[1] = ceil((curr_posi_[1]-min_range_[1])/resolution_);
+  index_xyz[2] = ceil((curr_posi_[2]-min_range_[2])/resolution_);
+  //ROS_INFO("%d %d %d", index_xyz[0],index_xyz[1],index_xyz[2]);
+  //ROS_INFO("indep!!!");
   { //TF map^ T ego
     static tf2_ros::TransformBroadcaster br_map_ego;
     geometry_msgs::TransformStamped transformStamped;
@@ -591,15 +596,35 @@ void OccMap::indepOdomCallback(const nav_msgs::OdometryConstPtr& odom)
   }
 }
 
+
+void OccMap::setupInflationRange(Eigen::Vector3i idx)
+{
+  inflate_idx_lower = idx - Eigen::Vector3i((inflate_radius_/resolution_),(inflate_radius_/resolution_),10);
+  inflate_idx_upper = idx + Eigen::Vector3i((inflate_radius_/resolution_),(inflate_radius_/resolution_),20);
+
+  for (int i=0; i<3; i++)
+  {
+    if(inflate_idx_lower[i]<0)
+    {
+      inflate_idx_lower[i]=0;
+    }
+    if(inflate_idx_upper[i]>grid_size_[i])
+    {
+      inflate_idx_upper[i]=grid_size_[i];
+    }
+  }
+
+}
+
 void OccMap::globalCloudCallback(const sensor_msgs::PointCloud2ConstPtr& msg)
 {
-   ROS_ERROR_STREAM("use_global_map_: " << use_global_map_ << ", has_global_cloud_: " << has_global_cloud_);
-    //if(use_global_map_ == true){
+  // ROS_ERROR_STREAM("use_global_map_: " << use_global_map_ << ", has_global_cloud_: " << has_global_cloud_);
+    if(use_global_map_ == true){
     //ROS_INFO("use_global_map_ is true.");
-  //}
-   //  if(use_global_map_ == false){
-   // ROS_INFO("use_global_map_ is false.");
-  //}
+  }
+     if(use_global_map_ == false){
+    ROS_INFO("use_global_map_ is false.");
+  }
 
   if(!use_global_map_ || has_global_cloud_)
     return;
@@ -608,7 +633,7 @@ void OccMap::globalCloudCallback(const sensor_msgs::PointCloud2ConstPtr& msg)
   pcl::fromROSMsg(*msg, global_cloud);
   global_map_valid_ = true;
   if(global_map_valid_ == true){
-    ROS_INFO("global_map_valid_ is true.");
+    //ROS_INFO("global_map_valid_ is true.");
   }
      if(global_map_valid_ == false){
     ROS_INFO("global_map_valid_ is false.");
@@ -629,12 +654,20 @@ void OccMap::globalCloudCallback(const sensor_msgs::PointCloud2ConstPtr& msg)
   //has_global_cloud_ = true;
   //global_cloud_sub_.shutdown();     //这里原本是没有注释的  这里会结束回调  后面点云图更新后  却没有膨胀
 
-  std::cout << "start inflate" << "\n";
+  //std::cout << "start inflate" << "\n";
   auto ts_global_inflate = std::chrono::high_resolution_clock::now();
-  inflate(Eigen::Vector3i(0,0,0), grid_size_);   //看这里   改膨胀系数
+
+  //inflate_idx_lower = index_xyz - Eigen::Vector3i((inflate_radius_/resolution_),(inflate_radius_/resolution_),10);
+  //inflate_idx_upper = index_xyz + Eigen::Vector3i((inflate_radius_/resolution_),(inflate_radius_/resolution_),20);
+  
+  setupInflationRange(index_xyz);
+  ROS_INFO("lower:%d %d %d", inflate_idx_lower[0],inflate_idx_lower[1],inflate_idx_lower[2]);
+  ROS_INFO("upper:%d %d %d", inflate_idx_upper[0],inflate_idx_upper[1],inflate_idx_upper[2]);
+  inflate(inflate_idx_lower, inflate_idx_upper);
+  //inflate(Eigen::Vector3i(0,0,0), grid_size_);   //看这里   改膨胀系数
   auto te_global_inflate = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> diff_global_inflate = te_global_inflate - ts_global_inflate;
-  std::cout << "inflate: " << diff_global_inflate.count() * 1e3 << " ms\n";
+  //std::cout << "inflate: " << diff_global_inflate.count() * 1e3 << " ms\n";
 
   // store in flann kdtree for nearest query
   auto ts_filter_tree = std::chrono::high_resolution_clock::now();
@@ -645,15 +678,15 @@ void OccMap::globalCloudCallback(const sensor_msgs::PointCloud2ConstPtr& msg)
   cloud_filtered_.reset(new pcl::PointCloud<pcl::PointXYZ>);
 	sor.filter(*cloud_filtered_);
   auto te_filter_tree = std::chrono::high_resolution_clock::now();
-  ROS_ERROR_STREAM("pts num after filter" << cloud_filtered_->points.size());
+  //ROS_ERROR_STREAM("pts num after filter" << cloud_filtered_->points.size());
 
   auto ts_build_tree = std::chrono::high_resolution_clock::now();
   pc_kdtree_.setInputCloud(cloud_filtered_);
   auto te_build_tree = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> diff_filter_tree = te_filter_tree - ts_filter_tree;
   std::chrono::duration<double> diff_build_tree = te_build_tree - ts_build_tree;
-  std::cout << "filter kdtree: " << diff_filter_tree.count() * 1e3 << " ms\n";
-  std::cout << "build kdtree: " << diff_build_tree.count() * 1e3 << " ms\n";
+  //std::cout << "filter kdtree: " << diff_filter_tree.count() * 1e3 << " ms\n";
+  //std::cout << "build kdtree: " << diff_build_tree.count() * 1e3 << " ms\n";
 
   /* test time usage */
   // std::mt19937_64 gen_;     
@@ -713,14 +746,16 @@ void OccMap::init(const ros::NodeHandle& nh)
   node_.param("occ_map/clamp_min_log", clamp_min_log_, 0.12);
   node_.param("occ_map/clamp_max_log", clamp_max_log_, 0.97);
   node_.param("occ_map/min_occupancy_log", min_occupancy_log_, 0.80);
-  node_.param("occ_map/inflate_length", infalte_length_, 0.0);
+  node_.param("occ_map/inflate_length", inflate_length_, 0.0);
+  node_.param("occ_map/inflate_radius", inflate_radius_, 100.0);
+
 
   node_.param("occ_map/fx", fx_, -1.0);
   node_.param("occ_map/fy", fy_, -1.0);
   node_.param("occ_map/cx", cx_, -1.0);
   node_.param("occ_map/cy", cy_, -1.0);
   node_.param("occ_map/rows", rows_, 480);
-  node_.param("occ_map/cols", cols_, 320);
+  node_.param("occ_map/cols", cols_, 320);  
 
   cout << "use_shift_filter_: " << use_shift_filter_ << endl;
   cout << "map size: " << map_size_.transpose() << endl;
@@ -733,7 +768,8 @@ void OccMap::init(const ros::NodeHandle& nh)
   cout << "thresh: " << min_occupancy_log_ << endl;
   cout << "skip: " << skip_pixel_ << endl;
 	cout << "sensor_range: " << sensor_range_.transpose() << endl;
-  cout << "infalte_length_: " << infalte_length_ << endl;
+  cout << "inflate_length_: " << inflate_length_ << endl;
+  cout << "inflate_radius_: " << inflate_radius_ << endl;
 
   /* ---------- setting ---------- */
   have_odom_ = false;
@@ -828,7 +864,7 @@ void OccMap::init(const ros::NodeHandle& nh)
 	{
     indep_odom_sub_ = node_.subscribe<nav_msgs::Odometry>("/odom_topic", 10, &OccMap::indepOdomCallback, this, ros::TransportHints().tcpNoDelay());
 		// global_occ_vis_timer_ = node_.createTimer(ros::Duration(5), &OccMap::globalOccVisCallback, this);
-    local_occ_vis_timer_ = node_.createTimer(ros::Duration(0.3), &OccMap::localOccVisCallback, this);
+  local_occ_vis_timer_ = node_.createTimer(ros::Duration(0.3), &OccMap::localOccVisCallback, this);
 	}
   curr_view_cloud_pub_ = node_.advertise<sensor_msgs::PointCloud2>("/occ_map/local_view_cloud", 1);
   hist_view_cloud_pub_ = node_.advertise<sensor_msgs::PointCloud2>("/occ_map/history_view_cloud", 1);

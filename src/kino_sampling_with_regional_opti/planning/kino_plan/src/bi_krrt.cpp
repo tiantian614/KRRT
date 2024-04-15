@@ -208,6 +208,8 @@ int BIKRRT::plan(Vector3d start_pos, Vector3d start_vel, Vector3d start_acc,
   return rrtStar(start_node_->x, goal_node_->x, n, search_time, radius_cost_between_two_states_, rewire_);
 }
 
+//rrtStar 形参列表
+//
 int BIKRRT::rrtStar(const StatePVA& x_init, const StatePVA& x_final, int n, double search_time, double radius, const bool rewire)
 { 
   ros::Time rrt_start_time = ros::Time::now();
