@@ -13,11 +13,11 @@
   <arg name="origin_x" value=" -150.0" />
   <arg name="origin_y" value=" -150.0" />
   <arg name="origin_z" value=" -5" />
-  <arg name="resolution" value="0.5" />
+  <arg name="resolution" value="0.4" />
   <arg name="vel_limit" value="6.0" />
-  <arg name="acc_limit" value="4.0" />
+  <arg name="acc_limit" value="8.0" />
   <arg name="jerk_limit" value="25.0" />
-  <arg name="rho_time" value="0.01" />
+<arg name="rho_time" value="0.01" />
   <arg name="global_test" value="true" />
 
   <node pkg="state_machine" type="state_machine_node" name="state_machine_node" output="screen" > 
@@ -62,7 +62,7 @@
     <param name="occ_map/min_ray_length" value="0.1"/>
     <param name="occ_map/max_ray_length" value="6.0"/>
     <param name="occ_map/use_global_map" value="$(arg global_test)" type="bool"/>
-    <param name="occ_map/inflate_length" value="1.0" type="double"/>
+    <param name="occ_map/inflate_length" value="0.2" type="double"/>
     <param name="occ_map/inflate_radius" value="100.0" type="double"/>
 
     <param name="pos_checker/dt" value="0.02"/>
@@ -100,11 +100,11 @@
     <param name="r3/search_time_per_meter" value="0.0005" type="double"/>
     <param name="r3/lattice_step" value="1.0" type="double"/>
 
-    <param name="sampler/vel_mag_mean" value="5.5" type="double" />
+    <param name="sampler/vel_mag_mean" value="2.5" type="double" />
     <param name="sampler/pos_hrz_var" value="1.5" type="double" />
     <param name="sampler/pos_vtc_var" value="1.0" type="double" />
     <param name="sampler/vel_mag_var" value="1.5" type="double" />
-    <param name="sampler/vel_dir_var" value="0.3" type="double" />
+    <param name="sampler/vel_dir_var" value="0.4" type="double" />
     <param name="sampler/resolution" value="$(arg resolution)" type="double" />
 
     <param name="optimization/vel_limit" value="$(arg vel_limit)" type="double" />

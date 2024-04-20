@@ -248,19 +248,28 @@ bool PosChecker::checkPolySeg(const Piece &seg, pair<Vector3d, Vector3d> &collid
   Vector3d head_vel = seg.getVel(0.0);
   Vector3d tail_vel = seg.getVel(tau);
 
+  //ROS_INFO("head_vel: %lf,%lf,%lf", head_vel[0],head_vel[1],head_vel[2]);
+  //ROS_INFO("tail_vel: %lf,%lf,%lf", tail_vel[0],tail_vel[1],tail_vel[2]);
   for (double t = 0.0; t <= tau; t += dt_)
   {
+    //Eigen::Vector3d testvec(1,2,3);
+    //ROS_INFO("testvec:%lf", testvec.dot());
     Eigen::Vector3d pos, vel, acc;
     pos = seg.getPos(t);
     vel = seg.getVel(t);
     acc = seg.getAcc(t);
+
+    //ROS_INFO("vel:%lf, %lf, %lf", vel[0], vel[1], vel[2]);
+    //ROS_INFO("veldot:%lf, %lf", vel.dot(head_vel), vel.dot(tail_vel));
     if (!zigzag)
     {
-      if (vel.dot(head_vel) < 0 && vel.dot(tail_vel) < 0)
+      if (vel.dot(head_vel) < -10 && vel.dot(tail_vel) < -10)   //在这一个seg中  有一下vel不合理  就会返回false
       {
+        //ROS_INFO("vel:%lf, %lf", vel.dot(head_vel), vel.dot(tail_vel));
         zigzag = true;
         need_region_opt = false;
         result = false;
+        //ROS_INFO("VEL goes wrong!");
         return false;
       }
     }
@@ -270,13 +279,16 @@ bool PosChecker::checkPolySeg(const Piece &seg, pair<Vector3d, Vector3d> &collid
       if (!occ_map_->isInMap(pos))
       {
         need_region_opt = false;
+        //ROS_INFO("Occ goes wrong!");
         return false;
       }
       if (!first_collision)
       {
         need_region_opt = false;
+        //ROS_INFO("Collision goes wrong!");
         return false;
       }
+ 
       result = false;
       is_valid = false;
       collide_pts.first = last_pos;
@@ -288,7 +300,7 @@ bool PosChecker::checkPolySeg(const Piece &seg, pair<Vector3d, Vector3d> &collid
       collide_pts.second = pos;
       if (!zigzag)
         need_region_opt = true;
-      first_collision = false;
+      //first_collision = false;
       t_s_e.second = t;
     }
     last_pos = pos;

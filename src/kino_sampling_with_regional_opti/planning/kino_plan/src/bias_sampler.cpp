@@ -288,6 +288,7 @@ bool BiasSampler::samplingOnce(int idx, StatePVA& rand_state)
   idx = idx % tracks_.size();
   double pos_mean = pos_mean_rand_(gen_);
   double pos_hor = pos_hor_rand_(gen_);
+  //ROS_INFO("pos_hor: %lf", pos_hor);
   double pos_ver = pos_ver_rand_(gen_);
   double vel_mag = vel_mag_rand_(gen_);
   if (vel_mag > vel_mag_mean_) 
@@ -302,7 +303,7 @@ bool BiasSampler::samplingOnce(int idx, StatePVA& rand_state)
   rand_state[2] = p_m[2] + pos_ver;
   Vector3d pos;
   pos = rand_state.head(3);
-  
+  //ROS_INFO("pos: %lf, %lf, %lf", pos[0], pos[1], pos[2]);
   Vector3d v_m = unit_tracks_[idx] * vel_mag;
   rotateClockwise3d(vel_hor_dir, v_m);
   rand_state[3] = v_m[0];

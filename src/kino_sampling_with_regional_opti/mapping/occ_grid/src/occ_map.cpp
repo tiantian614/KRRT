@@ -864,10 +864,10 @@ void OccMap::init(const ros::NodeHandle& nh)
 	{
     indep_odom_sub_ = node_.subscribe<nav_msgs::Odometry>("/odom_topic", 10, &OccMap::indepOdomCallback, this, ros::TransportHints().tcpNoDelay());
 		// global_occ_vis_timer_ = node_.createTimer(ros::Duration(5), &OccMap::globalOccVisCallback, this);
-  local_occ_vis_timer_ = node_.createTimer(ros::Duration(0.3), &OccMap::localOccVisCallback, this);
+  //local_occ_vis_timer_ = node_.createTimer(ros::Duration(0.3), &OccMap::localOccVisCallback, this);
 	}
-  curr_view_cloud_pub_ = node_.advertise<sensor_msgs::PointCloud2>("/occ_map/local_view_cloud", 1);
-  hist_view_cloud_pub_ = node_.advertise<sensor_msgs::PointCloud2>("/occ_map/history_view_cloud", 1);
+  //curr_view_cloud_pub_ = node_.advertise<sensor_msgs::PointCloud2>("/occ_map/local_view_cloud", 1);
+  //hist_view_cloud_pub_ = node_.advertise<sensor_msgs::PointCloud2>("/occ_map/history_view_cloud", 1);
 	global_cloud_sub_ = node_.subscribe<sensor_msgs::PointCloud2>("/global_cloud", 1, &OccMap::globalCloudCallback, this);
 	origin_pcl_pub_ = node_.advertise<sensor_msgs::PointCloud2>("/occ_map/raw_pcl", 1);
   projected_pc_pub_ = node_.advertise<sensor_msgs::PointCloud2>("/occ_map/filtered_pcl", 1);

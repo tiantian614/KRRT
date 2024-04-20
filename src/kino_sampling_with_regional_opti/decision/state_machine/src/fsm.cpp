@@ -96,7 +96,7 @@ namespace kino_planner
     new_goal_ = true;
   }
 
-  void FSM::executionCallback(const ros::TimerEvent &event)
+  void FSM::executionCallback(const ros::TimerEvent &event)    //100Hz
   {
     static int fsm_num = 0;
     fsm_num++;
@@ -154,6 +154,7 @@ namespace kino_planner
 
     case GENERATE_TRAJ:
     {
+      ROS_INFO("!!!generate traj!!!");
       bool success = searchForTraj(start_pos_, start_vel_, start_acc_, end_pos_, end_vel_, end_acc_, replan_time_); 
       if (success)
       {
@@ -171,6 +172,7 @@ namespace kino_planner
           sendEStopToServer();
           ROS_ERROR("ABOUT TO CRASH!! SERVER EMERGENCY STOP!!");
           getPlanStartState(start_pos_, start_vel_, start_acc_);
+          changeState(WAIT_GOAL);
         }
         else
         {
@@ -267,12 +269,17 @@ namespace kino_planner
 
     bikrrt_ptr_->reset();
     result = bikrrt_ptr_->plan(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, search_time);
+    //krrt_planner_ptr_->reset();
+    //result = krrt_planner_ptr_->plan(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, search_time);
     if (result == KRRTPlanner::SUCCESS)
     {
       double traj_use_time(0.0);
       bikrrt_ptr_->getTraj(traj_);
       traj_use_time = bikrrt_ptr_->getFinalTrajTimeUsage();
       double traj_cost = bikrrt_ptr_->evaluateTraj(traj_, traj_duration, traj_len, traj_seg_nums, traj_acc_itg, traj_jerk_itg);
+      //krrt_planner_ptr_->getTraj(traj_);
+      //traj_use_time = krrt_planner_ptr_->getFinalTrajTimeUsage();
+      //double traj_cost = krrt_planner_ptr_->evaluateTraj(traj_, traj_duration, traj_len, traj_seg_nums, traj_acc_itg, traj_jerk_itg);
       vis_x.clear();
       traj_.sampleWholeTrajectory(&vis_x);
       vis_ptr_->visualizeStates(vis_x, BLUE, pos_checker_ptr_->getLocalTime());

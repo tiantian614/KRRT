@@ -53,7 +53,7 @@ public:
         return solveTripleAccUnknown();
       else if (type == INITIAL_ACC_UNKNOWN)
         return solveTripleInitialAccUnknown();
-      else
+      else    // type == ACC_KNOWN
         // final state acc fixed
         return solveTriple();
     }

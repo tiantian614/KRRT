@@ -23,7 +23,7 @@ void BIKRRT::init(const ros::NodeHandle& nh)
   nh.param("bikrrt/rho", rho_, -1.0);
   nh.param("bikrrt/tree_node_nums", tree_node_nums_, 0);
   nh.param("bikrrt/radius_cost_between_two_states", radius_cost_between_two_states_, 0.0);
-  nh.param("bikrrt/allow_close_goal", allow_close_goal_, false);
+nh.param("bikrrt/allow_close_goal", allow_close_goal_, true);
   nh.param("bikrrt/stop_after_first_traj_found", stop_after_first_traj_found_, false);
   nh.param("bikrrt/rewire", rewire_, true);
   nh.param("bikrrt/use_regional_opt", use_regional_opt_, false);
@@ -212,6 +212,7 @@ int BIKRRT::plan(Vector3d start_pos, Vector3d start_vel, Vector3d start_acc,
 //
 int BIKRRT::rrtStar(const StatePVA& x_init, const StatePVA& x_final, int n, double search_time, double radius, const bool rewire)
 { 
+  ROS_INFO_STREAM("[BI]krrtStar starts!!!!!!!!!");
   ros::Time rrt_start_time = ros::Time::now();
   ros::Time first_goal_found_time, final_goal_found_time;
   double first_general_cost(0.0);
@@ -242,8 +243,8 @@ int BIKRRT::rrtStar(const StatePVA& x_init, const StatePVA& x_final, int n, doub
   double tau_for_instance = radius * 0.75; //maximum
   double fwd_radius_p = getForwardRadius(tau_for_instance, radius);  
   double bcwd_radius_p = getBackwardRadius(tau_for_instance, radius);
-  // ROS_INFO_STREAM("bcwd_radius_p: " << bcwd_radius_p);
-  // ROS_INFO_STREAM("fwd_radius_p: " << fwd_radius_p);
+   //ROS_INFO_STREAM("bcwd_radius_p: " << bcwd_radius_p);
+   //ROS_INFO_STREAM("fwd_radius_p: " << fwd_radius_p);
 
   /* main loop */
   vector<StatePVA> samples, valid_samples;
@@ -314,7 +315,7 @@ int BIKRRT::rrtStar(const StatePVA& x_init, const StatePVA& x_final, int n, doub
       RRTNodePtr curr_node = (RRTNodePtr)kd_res_item_data(p_bcwd_nbr_set);
       if (curr_node->tree_type == START_TREE) 
       { 
-        if (bvp_.solve(curr_node->x, x_rand, ACC_UNKNOWN))
+        if (bvp_.solve(curr_node->x, x_rand, ACC_KNOWN))    // 第一个突破口curr_node   x_rand   ACC_KNOWN
         {
           CoefficientMat coeff;
           bvp_.getCoeff(coeff);
@@ -326,8 +327,9 @@ int BIKRRT::rrtStar(const StatePVA& x_init, const StatePVA& x_final, int n, doub
           pair<Vector3d, Vector3d> collide_pts_one_seg;
           pair<double, double> t_s_e;
           bool need_region_opt(false);
-          bool pos_cons = pos_checker_ptr_->checkPolySeg(seg_from_parent, collide_pts_one_seg, t_s_e, need_region_opt);
+          bool pos_cons = pos_checker_ptr_->checkPolySeg(seg_from_parent, collide_pts_one_seg, t_s_e, need_region_opt);    //起点到终点的碰撞检测  把这个看明白
           bool connected = vel_cons && acc_cons && jerk_cons && pos_cons;
+          //ROS_INFO("cons: %d, %d, %d, %d", vel_cons, acc_cons, jerk_cons, pos_cons);
           if (connected) 
           {
             if (min_dist_start_tree > (curr_node->cost_from_start + bvp_.getCostStar()))
@@ -340,7 +342,11 @@ int BIKRRT::rrtStar(const StatePVA& x_init, const StatePVA& x_final, int n, doub
               x_near_start_tree = curr_node;
             } 
           }
+
+
+          
           else if (!goal_found && need_region_opt && use_regional_opt_ && seg_from_parent.getAcc(bvp_.getTauStar()).norm() < acc_limit_)
+          //else
           {
             // double dis = (curr_node->x - x_rand).head(3).norm();
             // only 2m < distance with potential parent < 5m and collision duration < 0.5 are stored to be optimized
@@ -418,9 +424,13 @@ int BIKRRT::rrtStar(const StatePVA& x_init, const StatePVA& x_final, int n, doub
 
     // size_t n_r_p_start_tree = regional_parents_start_tree.size();
     RRTNode* sampled_node_start_tree(nullptr);
+    //ROS_INFO("x_near_start_tree is null?:  %d", x_near_start_tree == nullptr);
     // if (x_near_start_tree == nullptr && n_r_p_start_tree > 0) 
-    if (x_near_start_tree == nullptr && !regional_candidate_queue_start_tree.empty()) 
+
+    //if (x_near_start_tree == nullptr && !regional_candidate_queue_start_tree.empty()) 
+    if (x_near_start_tree == nullptr)
     {
+      //ROS_INFO("ENTER 426");
       bool promising_node(true);
       Trajectory local_opt_traj;
       // for (size_t i = 0; i < n_r_p_start_tree; ++i)
@@ -434,7 +444,9 @@ int BIKRRT::rrtStar(const StatePVA& x_init, const StatePVA& x_final, int n, doub
         // bool regional_opt_result = stOpt(curr_regional_candidate.regional_seg, curr_regional_candidate.parent, local_opt_traj);
         // ROS_ERROR_STREAM("regional_opt costs " << 1e3 * (ros::Time::now() - r_o_ts).toSec() << " ms. Result: " << regional_opt_result);
         // getchar();
+        ROS_INFO("RO_RESULT:%d", regional_opt_result);
         if (regional_opt_result)
+        //if(true)
         {
           optimizer_ptr_->getTraj(local_opt_traj);
 
@@ -450,6 +462,7 @@ int BIKRRT::rrtStar(const StatePVA& x_init, const StatePVA& x_final, int n, doub
             double regional_traj_cost = local_opt_traj.calCost(rho_, cost);
             if (curr_regional_candidate.parent->cost_from_start + regional_traj_cost + bvp_.getCostStar() >= curr_best_solution_cost) 
             {
+              //ROS_INFO("ENTER 456");
               // ROS_WARN("regionally optimized but sample rejected");
               promising_node = false;
             }
@@ -464,6 +477,7 @@ int BIKRRT::rrtStar(const StatePVA& x_init, const StatePVA& x_final, int n, doub
           // ROS_WARN("regional optimized");
           if (promising_node)
           {
+            //ROS_INFO("ENTER 471");
             StatePVA mid_x; 
             Vector3d pos, vel, acc;
             RRTNode *curr_node_in_regional_traj(nullptr), *last_node(nullptr);
@@ -499,6 +513,7 @@ int BIKRRT::rrtStar(const StatePVA& x_init, const StatePVA& x_final, int n, doub
     } 
     else if (x_near_start_tree != nullptr)
     {
+      //ROS_INFO("enter 504");
       /* parent found within radius, then add a node to rrt and kd_tree */
       //sample rejection
       bool promising_node(true);
@@ -520,6 +535,7 @@ int BIKRRT::rrtStar(const StatePVA& x_init, const StatePVA& x_final, int n, doub
       }
       if (promising_node)
       {
+        //ROS_INFO("enter 525");
         /* 1.1 add the randomly sampled node to rrt_tree */
         sampled_node_start_tree = addTreeNode(x_near_start_tree, x_rand, find_parent_seg_start_tree, min_dist_start_tree, tau_from_s_start_tree, cost_from_p_start_tree, tau_from_p_start_tree);
         sampled_node_start_tree->tree_type = START_TREE;
@@ -599,6 +615,7 @@ int BIKRRT::rrtStar(const StatePVA& x_init, const StatePVA& x_final, int n, doub
     // if (x_near_goal_tree == nullptr && n_r_p_goal_tree > 0) 
     if (x_near_goal_tree == nullptr && !regional_candidate_queue_goal_tree.empty()) 
     {
+      //ROS_INFO("Enter 604");
       bool promising_node(true);
       Trajectory local_opt_traj;
       // for (size_t i = 0; i < n_r_p_goal_tree; ++i)
@@ -679,16 +696,22 @@ int BIKRRT::rrtStar(const StatePVA& x_init, const StatePVA& x_final, int n, doub
     {
       /* parent found within radius, then add a node to rrt and kd_tree */
       //sample rejection
+      //ROS_INFO("Enter 685");
       bool promising_node(true);
       Vector3d calculated_acc = find_parent_seg_goal_tree.getAcc(0.0);
-      if (calculated_acc.norm() >= acc_limit_)
+      //ROS_INFO("calculated_acc: %lf", calculated_acc.norm());
+      if (calculated_acc.norm() >= acc_limit_){
+        //ROS_INFO("calculated_acc: %lf", calculated_acc.norm());
+        //ROS_INFO("promising_node1!!!");
         promising_node = false;
+      }
       x_rand.tail(3) = calculated_acc;
       if(bvp_.solve(start_node_->x, x_rand, ACC_KNOWN))
       {
         if (min_dist_goal_tree + bvp_.getCostStar() >= curr_best_solution_cost) 
         {
           // ROS_WARN("parent found but sample rejected");
+          //ROS_INFO("promising_node2!!!");
           promising_node = false;
         }
       }
@@ -698,10 +721,11 @@ int BIKRRT::rrtStar(const StatePVA& x_init, const StatePVA& x_final, int n, doub
       }
       if (promising_node)
       {
+        //ROS_INFO("Enter 710");
         /* 1.1 add the randomly sampled node to rrt_tree */
         sampled_node_goal_tree = addTreeNode(x_near_goal_tree, x_rand, find_parent_seg_goal_tree, min_dist_goal_tree, tau_from_s_goal_tree, cost_from_p_goal_tree, tau_from_p_goal_tree);
         sampled_node_goal_tree->tree_type = GOAL_TREE;
-
+        //ROS_INFO("sampled_node_goal_tree is null?: %d", sampled_node_goal_tree == nullptr);
         /* 1.2 add the randomly sampled node to kd_tree */
         kd_insert3(kd_tree, x_rand[0], x_rand[1], x_rand[2], sampled_node_goal_tree);
       }
@@ -769,13 +793,16 @@ int BIKRRT::rrtStar(const StatePVA& x_init, const StatePVA& x_final, int n, doub
       }/* end of rewire */
     }
     /* end of find parent */
-
+    //ROS_INFO("222sampled_node_goal_tree is null?: %d", sampled_node_goal_tree == nullptr);
+    //ROS_INFO("222sampled_node_start_tree is null?: %d", sampled_node_start_tree == nullptr);
     if (sampled_node_goal_tree != nullptr && sampled_node_start_tree != nullptr) 
     {
-      if (curr_best_solution_cost <= sampled_node_start_tree->cost_from_start + sampled_node_goal_tree->cost_from_start)
-      {
-        continue;
-      }
+      //if (curr_best_solution_cost <= sampled_node_start_tree->cost_from_start + sampled_node_goal_tree->cost_from_start)
+      //{
+      //  continue;
+      //}
+      //ROS_INFO("sampled_node_start_tree: %lf %lf %lf",  sampled_node_start_tree->x[0], sampled_node_start_tree->x[1], sampled_node_start_tree->x[2]);
+      //ROS_INFO("sampled_node_goal_tree: %lf %lf %lf",  sampled_node_goal_tree->x[0], sampled_node_goal_tree->x[1], sampled_node_goal_tree->x[2]);
       curr_best_solution_cost = sampled_node_start_tree->cost_from_start + sampled_node_goal_tree->cost_from_start;
       bridge_node_start_tree = sampled_node_start_tree;
       bridge_node_goal_tree = sampled_node_goal_tree;
